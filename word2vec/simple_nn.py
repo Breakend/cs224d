@@ -1,5 +1,6 @@
 from sigmoid_func import sigmoid
 from softmax import softmax
+from data_utils import *
 
 import numpy as np
 
@@ -9,7 +10,7 @@ import numpy as np
 # https://github.com/msushkov/cs224d-hw1/blob/master/wordvec_sentiment.ipynb
 ###################################################################
 
-def forward_backward_prop(data, labels, params):
+def forward_backward_prop(dimensions, data, labels, params):
     """ Forward and backward propagation for a two-layer sigmoidal network """
     ###################################################################
     # Compute the forward propagation and for the cross entropy cost, #
@@ -29,12 +30,13 @@ def forward_backward_prop(data, labels, params):
     ### YOUR CODE HERE: forward propagation
 
     # cost = ...
-    h = sigmoid(np.dot(W1, data) + b1) # hidden layer
-    y_hat = softmax(np.dot(W2, h) + b2) # Top classifier layer
+    a = np.dot(data, W1) + b1
+    h = sigmoid(a) # hidden layer
+    y_hat = softmax(np.dot(h, W2) + b2) # Top classifier layer
     N, D = data.shape
 
     # TODO: may need to change this to sum over rows and then sum up rows?
-    cost = (-1/N)*np.sum(np.dot(labels, np.log(A2)))
+    cost = (-1/N)*np.sum(np.multiply(labels, np.log(y_hat)))
 
     ### END YOUR CODE
 
@@ -46,9 +48,19 @@ def forward_backward_prop(data, labels, params):
     #gradb2 = ...
 
     # d_y_hat/d_W2
-    gradW2 = np.dot((y_hat - labels), h)
-    gradW1 = np.do
+    J_theta = y_hat - labels
+    theta_W2 = h
+    theta_h = W2
+    h_a = a * (1.0 - a)
+    a_W1 = data
+
+    gradW2 = np.dot(J_theta.T, theta_W2)
+    gradW1 = np.dot(labels.T, np.dot(J_theta, theta_h.T) * h_a)
+    gradb1 = np.dot(J_theta, W2.T) * h_a
+    gradb2 = J_theta
     assert gradW1.shape == W1.shape
+    print gradb1.shape
+    print b1.shape
     assert gradb1.shape == b1.shape
     assert W2.shape == gradW2.shape
     assert gradb2.shape == b2.shape
