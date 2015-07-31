@@ -30,13 +30,22 @@ def forward_backward_prop(dimensions, data, labels, params):
     ### YOUR CODE HERE: forward propagation
 
     # cost = ...
-    a = np.dot(data, W1) + b1
+    # labels is (20, 10) (20 1-hot vectors) - this is y
+    # data is (20, 10) - this is x
+    # W1 is (10, 5)
+    # W2 is (5, 10)
+    # b1 is (1, 5)
+    # b2 is (1, 10)
+    a = data.dot(W1) + b1
     h = sigmoid(a) # hidden layer
-    y_hat = softmax(np.dot(h, W2) + b2) # Top classifier layer
+    y_hat = softmax(h.dot(W2) + b2) # Top classifier layer
     N, D = data.shape
+    (Dx, H) = W1.shape
 
     # TODO: may need to change this to sum over rows and then sum up rows?
-    cost = (-1/N)*np.sum(np.multiply(labels, np.log(y_hat)))
+    # cost = np.sum(-np.sum(np.multiply(labels, np.log(y_hat)), axis=1).reshape((N, 1)))
+    cost_per_datapoint = -np.sum(labels * np.log(y_hat), axis=1).reshape((N, 1)) # sum over rows
+    cost = np.sum(cost_per_datapoint)
 
     ### END YOUR CODE
 
@@ -49,18 +58,22 @@ def forward_backward_prop(dimensions, data, labels, params):
 
     # d_y_hat/d_W2
     J_theta = y_hat - labels
-    theta_W2 = h
-    theta_h = W2
-    h_a = a * (1.0 - a)
+    # theta_W2 = h
+    # theta_h = W2
+    h_a = h * (1.0 - h)
     a_W1 = data
+    y_hathw = J_theta.dot(W2.T)*h_a
 
-    gradW2 = np.dot(J_theta.T, theta_W2)
-    gradW1 = np.dot(labels.T, np.dot(J_theta, theta_h.T) * h_a)
-    gradb1 = np.dot(J_theta, W2.T) * h_a
-    gradb2 = J_theta
+    gradW2 = h.T.dot(J_theta)
+    gradW1 = data.T.dot(y_hathw)
+    # gradW1 = np.dot(data.T, np.dot(J_theta, theta_h.T) * h_a)
+    gradb1 = np.sum(y_hathw, axis=0).reshape((1, H))
+    gradb2 = np.sum(J_theta, axis=0).reshape((1, D))
+
+
     assert gradW1.shape == W1.shape
-    print gradb1.shape
-    print b1.shape
+    # print gradb1.shape
+    # print b1.shape
     assert gradb1.shape == b1.shape
     assert W2.shape == gradW2.shape
     assert gradb2.shape == b2.shape
