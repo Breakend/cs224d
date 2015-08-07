@@ -36,6 +36,7 @@ def forward_backward_prop(dimensions, data, labels, params):
     # W2 is (5, 10)
     # b1 is (1, 5)
     # b2 is (1, 10)
+
     a = data.dot(W1) + b1
     h = sigmoid(a) # hidden layer
     y_hat = softmax(h.dot(W2) + b2) # Top classifier layer
@@ -72,8 +73,6 @@ def forward_backward_prop(dimensions, data, labels, params):
 
 
     assert gradW1.shape == W1.shape
-    # print gradb1.shape
-    # print b1.shape
     assert gradb1.shape == b1.shape
     assert W2.shape == gradW2.shape
     assert gradb2.shape == b2.shape

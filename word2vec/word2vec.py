@@ -32,34 +32,19 @@ def softmaxCostAndGradient(dataset, predicted, target, outputVectors):
     ### YOUR CODE HERE
     # Keep track of outputVector shape
     N, D = outputVectors.shape
-    # J(theta) = -log(softmax(Wx))
     x = predicted.reshape(D, 1)
-    # Reshape to keep proper shapes for function
-    # (N, D).dot(D, 1) = (N,1)
     Wx = (outputVectors.dot(x)).reshape(1, N)
-    # (1, N)
     theta = softmax(Wx)
-    # Reshape back
-    cost = theta.reshape((N,))
-    # Cost for the target vector
-    # TODO: this seems inefficent to calculate cost for all the targets and then
-    # only use one (memoize?)
-    cost = -np.log(cost[target])
-    # J(theta) = -log(softmax(theta))
-    # theta = Wx
-    # dJ/d_{PredictedWordVector} = d_J/d_{theta} (d_theta/d_predicted)
-    # => (y_hat - y)(x[target])
-    # (1, N) - (N, D)
-    # y_hat.outputVectors - x[ta]
-    # gradPred = (theta - outputVectors.reshape(1, D))
-    gradPred = np.dot(theta, outputVectors) - outputVectors[target].reshape((1, D))
+    theta_vec = theta.reshape((N,))
+    cost = -np.log(theta_vec[target])
+
+    gradPred = theta.dot(outputVectors) - outputVectors[target].reshape((1, D))
     gradPred = gradPred.reshape((D,))
 
-    grad = np.dot(theta.T, predicted.reshape((1, D)))
+    grad = theta.T.dot(predicted.reshape((1, D)))
     m = np.zeros(grad.shape)
     m[target, :] = predicted.reshape((1, D))
     grad = grad - m
-    # print gradPred.shape
 
     ### END YOUR CODE
 
@@ -94,10 +79,10 @@ def negSamplingCostAndGradient(dataset, predicted, target, outputVectors, K=10):
     N, D = outputVectors.shape
 
     # cost = - log(\sigma(v^{i-C+j} \dot h)) + \sum_{k=1}^{K} log(\sigma(v^{(k)} \dot h))
-    # try:
-    cost = np.sum(np.log(sigmoid(samples.dot(predicted)))) - np.log(predicted.dot(outputVectors[target]))
-    # except:
-        # import pdb;pdb.set_trace()
+    samples_dot_predicted = sigmoid(samples.dot(predicted.reshape((D,1))))
+    predicted_dot_target = sigmoid(predicted.dot(outputVectors[target]))
+    cost = -1.0 * np.sum(np.log(samples_dot_predicted)) - np.log(predicted_dot_target)
+
     # Derivative w.r.t. predicted (h)
     # -(\frac{1}{\sigma(v^{i-C+j} \dot h)})(\grad sigmoid(v^{i-C+j} \dot (h)))(v^{i-C+j})
     # => - (1-sigmoid(samples \dot (predicted)))(samples)
@@ -105,12 +90,12 @@ def negSamplingCostAndGradient(dataset, predicted, target, outputVectors, K=10):
     # import pdb;pdb.set_trace()
     # import pdb; pdb.set_trace()
 
-    sig = (sigmoid(predicted.dot(outputVectors[target])) - 1.0)
-    gradPred = sig * outputVectors[target].reshape(1, D) + (1 - sigmoid(samples.dot(predicted))).reshape(1, K).dot(samples)
+    sig = predicted_dot_target - 1.0
+    gradPred = sig * outputVectors[target].reshape(1, D) + (1.0 - samples_dot_predicted).reshape(1, K).dot(samples)
     gradPred = gradPred.reshape(D,)
 
     grad = np.zeros(outputVectors.shape)
-    grad[target, :] = predicted * (sigmoid(predicted.dot(outputVectors[target])) - 1.0)
+    grad[target, :] = predicted * sig
     for sample, k in zip(samples, sample_indices):
         grad[k, :] += -1.0 * predicted * (sigmoid(-1.0 * predicted.dot(sample)) - 1.0)
 
