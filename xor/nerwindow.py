@@ -64,7 +64,8 @@ class WindowMLP(NNBase):
 
         random.seed(rseed) # be sure to seed this for repeatability!
         #### YOUR CODE HERE ####
-
+        sel
+        self..
         # any other initialization you need
 
 

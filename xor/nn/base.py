@@ -298,7 +298,7 @@ class NNBase(object):
         self._reset_grad_acc()
         self._acc_grads(x, y)
         self.sgrads.coalesce() # combine sparse updates
-
+        passed = True # if grad check doesn't pass throw flag
         ##
         # Loop over dense parameters
         for name in self.params.names():
@@ -377,11 +377,14 @@ class NNBase(object):
                 print >> outfd, "grad_check: dJ/d%s[%s] error norm = %.04g" % (name, idx, grad_delta),
                 print >> outfd, ("[ok]" if grad_delta < tol else "**ERROR**")
                 print >> outfd, "    %s[%s] dims: %s = %d elem" % (name, idx, str(list(grad_computed.shape)), prod(grad_computed.shape))
+                if grad_delta >= tol:
+                    passed = False
                 if verbose and (grad_delta > tol): # DEBUG
                     print >> outfd, "Numerical: \n" + str(grad_approx)
                     print >> outfd, "Computed:  \n" + str(grad_computed)
 
         self._reset_grad_acc()
+        return passed
 
 
     def predict_proba(self, X):
